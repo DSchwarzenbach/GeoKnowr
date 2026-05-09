@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GeoRival — Playing</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="game-body">
+
+  <!-- ═══════════════════════════════════
+       HUD (top bar)
+  ═══════════════════════════════════ -->
+  <header class="game-hud">
+    <span id="round-label" class="hud-round">Round 1 / 5</span>
+    <span id="timer-display" class="hud-timer">60</span>
+    <span class="hud-score-wrap">Score: <strong id="total-score">0</strong></span>
+  </header>
+
+  <!-- ═══════════════════════════════════
+       MAIN GAME AREA
+  ═══════════════════════════════════ -->
+  <div id="game-area">
+    <!-- Street View fills the whole screen -->
+    <div id="panorama"></div>
+
+    <!-- Guess map overlay (bottom-right) -->
+    <div class="guess-map-container">
+      <div id="guess-map"></div>
+      <p id="waiting-msg" class="waiting-msg hidden">⏳ Waiting for other players…</p>
+      <button id="btn-guess" class="btn btn-guess" disabled>Guess!</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════
+       ROUND RESULTS PANEL (hidden until all guessed)
+  ═══════════════════════════════════ -->
+  <div id="results-panel" class="overlay-panel hidden">
+    <div class="panel-inner">
+      <h2 class="panel-title">Round Results</h2>
+      <div id="results-map" class="results-map"></div>
+      <table class="results-table">
+        <thead>
+          <tr><th>Rank</th><th>Player</th><th>Distance</th><th>Score</th></tr>
+        </thead>
+        <tbody id="results-body"></tbody>
+      </table>
+      <button id="btn-next-round" class="btn btn-primary w-full">Next Round</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════
+       FINAL LEADERBOARD
+  ═══════════════════════════════════ -->
+  <div id="final-panel" class="overlay-panel hidden">
+    <div class="panel-inner">
+      <h2 class="panel-title">🏆 Final Results</h2>
+      <table class="results-table">
+        <thead>
+          <tr><th>Rank</th><th>Player</th><th>Total Score</th></tr>
+        </thead>
+        <tbody id="final-body"></tbody>
+      </table>
+      <a href="index.html" class="btn btn-secondary w-full" style="margin-top:1rem;display:block;text-align:center;text-decoration:none;">Play Again</a>
+    </div>
+  </div>
+
+  <!-- Google Maps loaded last with callback -->
+  <script type="module" src="js/game.js"></script>
+  <script
+    src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&callback=initGame"
+    async defer
+  ></script>
+</body>
+</html>
