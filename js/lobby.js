@@ -37,11 +37,13 @@ const els = {
   maxPlayersInput: document.getElementById("setting-max-players"),
   btnCreate:       document.getElementById("btn-create-game"),
   createError:     document.getElementById("create-error"),
+  btnBackHost:     document.getElementById("btn-back-host"),
   // Join
   joinNameInput:   document.getElementById("join-name"),
   joinCodeInput:   document.getElementById("join-code"),
   btnJoinGame:     document.getElementById("btn-join-game"),
   joinError:       document.getElementById("join-error"),
+  btnBackJoin:     document.getElementById("btn-back-join"),
   // Lobby
   lobbyCode:       document.getElementById("lobby-code"),
   lobbySettings:   document.getElementById("lobby-settings"),
@@ -127,6 +129,9 @@ function enterLobby() {
 // ─────────────────────────────────────────────────────────────
 
 els.btnHost.addEventListener("click", () => showScreen("host"));
+els.btnJoin.addEventListener("click", () => showScreen("join"));
+els.btnBackHost.addEventListener("click", () => showScreen("home"));
+els.btnBackJoin.addEventListener("click", () => showScreen("home"));
 
 els.btnCreate.addEventListener("click", async () => {
   const hostName = els.hostNameInput.value.trim();

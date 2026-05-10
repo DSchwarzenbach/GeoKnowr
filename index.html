@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GeoRival — Free Multiplayer GeoGuessr</title>
-  <meta name="description" content="Play a free GeoGuessr-style geography game with friends. No account needed." />
+  <title>GeoKnowr — Free Multiplayer Geography Game</title>
+  <meta name="description" content="Drop a pin, beat your friends. A free multiplayer geography guessing game." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -17,8 +17,8 @@
   ═══════════════════════════════════════════ -->
   <div id="screen-home" class="screen center-screen">
     <div class="logo-wrap">
-      <span class="logo-icon">🌍</span>
-      <h1 class="logo-text">GeoRival</h1>
+      <img src="assets/logo.png" alt="GeoKnowr logo" class="logo-img" />
+      <h1 class="logo-text">GeoKnowr</h1>
       <p class="logo-sub">Drop a pin. Beat your friends.</p>
     </div>
     <div class="btn-group">
@@ -32,18 +32,26 @@
   ═══════════════════════════════════════════ -->
   <div id="screen-host" class="screen center-screen hidden">
     <div class="card">
-      <h2>Create a Game</h2>
+      <div class="card-header">
+        <img src="assets/logo.png" alt="" class="card-logo" />
+        <h2>New Game</h2>
+      </div>
 
-      <label class="field-label" for="host-name">Your Name</label>
-      <input id="host-name" class="field-input" type="text" maxlength="20" placeholder="e.g. Alex" autocomplete="off" />
+      <div class="field-group">
+        <label class="field-label" for="host-name">Your Name</label>
+        <input id="host-name" class="field-input" type="text" maxlength="20" placeholder="e.g. Alex" autocomplete="off" />
+      </div>
 
       <div class="settings-grid">
-        <div>
-          <label class="field-label" for="setting-round-time">Round Timer (seconds)</label>
-          <input id="setting-round-time" class="field-input" type="number" value="60" min="0" max="600" data-round-count="5" />
-          <small class="field-hint">Set 0 for no timer</small>
+        <div class="field-group">
+          <label class="field-label" for="setting-round-time">Round Timer</label>
+          <div class="input-suffix-wrap">
+            <input id="setting-round-time" class="field-input" type="number" value="60" min="0" max="600" />
+            <span class="input-suffix">sec</span>
+          </div>
+          <small class="field-hint">0 = no timer</small>
         </div>
-        <div>
+        <div class="field-group">
           <label class="field-label" for="setting-max-players">Max Players</label>
           <select id="setting-max-players" class="field-input field-select">
             <option value="2">2 players</option>
@@ -54,6 +62,7 @@
 
       <p id="create-error" class="error-text"></p>
       <button id="btn-create-game" class="btn btn-primary w-full">Create Game</button>
+      <button id="btn-back-host" class="btn btn-ghost w-full">Back</button>
     </div>
   </div>
 
@@ -62,16 +71,24 @@
   ═══════════════════════════════════════════ -->
   <div id="screen-join" class="screen center-screen hidden">
     <div class="card">
-      <h2>Join a Game</h2>
+      <div class="card-header">
+        <img src="assets/logo.png" alt="" class="card-logo" />
+        <h2>Join Game</h2>
+      </div>
 
-      <label class="field-label" for="join-name">Your Name</label>
-      <input id="join-name" class="field-input" type="text" maxlength="20" placeholder="e.g. Sam" autocomplete="off" />
+      <div class="field-group">
+        <label class="field-label" for="join-name">Your Name</label>
+        <input id="join-name" class="field-input" type="text" maxlength="20" placeholder="e.g. Sam" autocomplete="off" />
+      </div>
 
-      <label class="field-label" for="join-code">Room Code</label>
-      <input id="join-code" class="field-input field-code" type="text" maxlength="4" placeholder="XXXX" autocomplete="off" />
+      <div class="field-group">
+        <label class="field-label" for="join-code">Room Code</label>
+        <input id="join-code" class="field-input field-code" type="text" maxlength="4" placeholder="XXXX" autocomplete="off" />
+      </div>
 
       <p id="join-error" class="error-text"></p>
       <button id="btn-join-game" class="btn btn-primary w-full">Join Game</button>
+      <button id="btn-back-join" class="btn btn-ghost w-full">Back</button>
     </div>
   </div>
 
@@ -81,8 +98,11 @@
   <div id="screen-lobby" class="screen center-screen hidden">
     <div class="card card-wide">
       <div class="lobby-header">
-        <h2>Waiting for Players</h2>
-        <div class="room-code-display">
+        <div>
+          <p class="lobby-label">Waiting for players</p>
+          <h2 class="lobby-title">Share the code!</h2>
+        </div>
+        <div class="room-code-badge">
           <span class="room-code-label">Room Code</span>
           <span id="lobby-code" class="room-code-value">----</span>
         </div>
@@ -92,7 +112,7 @@
 
       <ul id="player-list" class="player-list"></ul>
 
-      <p id="lobby-status" class="lobby-status-msg">Share the room code with your friend to start!</p>
+      <p id="lobby-status" class="lobby-status-msg">Waiting for everyone to ready up…</p>
 
       <button id="btn-ready" class="btn btn-primary w-full">I'm Ready!</button>
     </div>
