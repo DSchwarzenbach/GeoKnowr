@@ -36,6 +36,7 @@ const els = {
   roundTimeInput:  document.getElementById("setting-round-time"),
   maxPlayersInput: document.getElementById("setting-max-players"),
   btnCreate:       document.getElementById("btn-create-game"),
+  createError:     document.getElementById("create-error"),
   // Join
   joinNameInput:   document.getElementById("join-name"),
   joinCodeInput:   document.getElementById("join-code"),
@@ -132,7 +133,7 @@ els.btnCreate.addEventListener("click", async () => {
   if (!hostName) return;
 
   const settings = {
-    round_count:          parseInt(els.roundTimeInput.dataset.roundCount || CONFIG.DEFAULTS.ROUND_COUNT, 10),
+    round_count:          CONFIG.DEFAULTS.ROUND_COUNT,  // fixed: always 5 rounds
     round_time_seconds:   parseInt(els.roundTimeInput.value, 10),
     max_players:          parseInt(els.maxPlayersInput.value, 10),
   };
@@ -142,13 +143,15 @@ els.btnCreate.addEventListener("click", async () => {
 
   els.btnCreate.disabled = true;
   els.btnCreate.textContent = "Creating…";
+  if (els.createError) els.createError.textContent = "";
 
   try {
-    gameState  = await createGame({ roomCode, hostName, locations: selectedLocations, settings });
+    gameState   = await createGame({ roomCode, hostName, locations: selectedLocations, settings });
     playerState = await joinGame(gameState.id, hostName);
     enterLobby();
   } catch (e) {
     console.error(e);
+    if (els.createError) els.createError.textContent = e.message || "Failed to create game. Check your Supabase config.";
     els.btnCreate.disabled = false;
     els.btnCreate.textContent = "Create Game";
   }

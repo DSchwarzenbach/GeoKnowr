@@ -64,20 +64,7 @@ const els = {
 function initMaps() {
   const location = LOCATIONS[currentRound - 1];
 
-  // Street View panorama
-  panorama = new google.maps.StreetViewPanorama(els.panoEl, {
-    position: { lat: location.lat, lng: location.lng },
-    pov: { heading: 0, pitch: 0 },
-    zoom: 1,
-    // Disable controls that reveal location
-    addressControl: false,
-    fullscreenControl: false,
-    showRoadLabels: false,
-    motionTracking: false,
-    motionTrackingControl: false,
-  });
-
-  // Guess map (small overlay)
+  // Guess map (small overlay) — init immediately
   guessMap = new google.maps.Map(els.guessMapEl, {
     center: { lat: 20, lng: 0 },
     zoom: 1,
@@ -90,6 +77,36 @@ function initMaps() {
     if (hasGuessed) return;
     placeGuessMarker(e.latLng);
   });
+
+  // Find nearest Street View coverage before loading panorama
+  const sv = new google.maps.StreetViewService();
+  sv.getPanorama(
+    { location: { lat: location.lat, lng: location.lng }, radius: 50000, preference: google.maps.StreetViewPreference.NEAREST },
+    (data, status) => {
+      if (status === google.maps.StreetViewStatus.OK) {
+        // Snap the stored location to the actual panorama position so scoring is accurate
+        LOCATIONS[currentRound - 1] = {
+          lat: data.location.latLng.lat(),
+          lng: data.location.latLng.lng(),
+        };
+        panorama = new google.maps.StreetViewPanorama(els.panoEl, {
+          pano: data.location.pano,
+          pov: { heading: Math.random() * 360, pitch: 0 },
+          zoom: 1,
+          addressControl: false,
+          fullscreenControl: false,
+          showRoadLabels: false,
+          motionTracking: false,
+          motionTrackingControl: false,
+        });
+      } else {
+        // No coverage within 50km — show a message and skip this location
+        els.panoEl.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#8b949e;font-size:1.2rem;">No Street View here — auto-submitting...</div>`;
+        // Auto-submit from center of map after 2s so game doesn't stall
+        setTimeout(() => { if (!hasGuessed) autoSubmit(); }, 2000);
+      }
+    }
+  );
 }
 
 function placeGuessMarker(latLng) {
