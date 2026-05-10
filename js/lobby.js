@@ -103,7 +103,12 @@ async function pickValidLocations(count, onProgress) {
     try {
       const snapped = await new Promise((resolve, reject) => {
         sv.getPanorama(
-          { location: loc, radius: 5000, preference: google.maps.StreetViewPreference.NEAREST },
+          {
+            location: loc,
+            radius: 5000,
+            source: google.maps.StreetViewSource.OUTDOOR,
+            preference: google.maps.StreetViewPreference.NEAREST,
+          },
           (data, status) => {
             if (status === google.maps.StreetViewStatus.OK) {
               resolve({

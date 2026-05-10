@@ -153,6 +153,7 @@ function loadPanorama() {
     {
       location: { lat: location.lat, lng: location.lng },
       radius: 50000,
+      source: google.maps.StreetViewSource.OUTDOOR,
       preference: google.maps.StreetViewPreference.NEAREST,
     },
     (data, status) => {
