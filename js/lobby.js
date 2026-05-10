@@ -96,9 +96,13 @@ function loadMapsApi() {
 }
 
 /**
- * Pick `count` locations that are confirmed to have Street View coverage
- * within 5km. Keeps drawing from the shuffled pool until enough valid
- * ones are found. Progress callback receives (found, needed).
+ * Pick `count` locations that are confirmed to have navigable Street View
+ * coverage within 5 km.  Keeps drawing from the shuffled pool until enough
+ * valid ones are found.  Progress callback receives (found, needed).
+ *
+ * Each returned location includes a `pano` ID so that every client loads the
+ * exact same panorama — no ambiguity from radius-based searches.
+ * Photospheres (single-point, non-navigable) are rejected.
  */
 async function pickValidLocations(count, onProgress) {
   await loadMapsApi();
@@ -119,21 +123,27 @@ async function pickValidLocations(count, onProgress) {
             preference: google.maps.StreetViewPreference.NEAREST,
           },
           (data, status) => {
-            if (status === google.maps.StreetViewStatus.OK) {
-              resolve({
-                lat: data.location.latLng.lat(),
-                lng: data.location.latLng.lng(),
-              });
-            } else {
-              reject();
+            if (status !== google.maps.StreetViewStatus.OK) {
+              return reject(new Error("no coverage"));
             }
+
+            // Reject photospheres / non-navigable panos (no connected roads)
+            if (!data.links || data.links.length === 0) {
+              return reject(new Error("photosphere – not navigable"));
+            }
+
+            resolve({
+              lat:  data.location.latLng.lat(),
+              lng:  data.location.latLng.lng(),
+              pano: data.location.pano,        // deterministic pano ID for all clients
+            });
           }
         );
       });
       valid.push(snapped);
       onProgress(valid.length, count);
     } catch {
-      // No coverage at this coord — skip and try next
+      // No navigable coverage at this coord — skip and try next
     }
   }
 

@@ -169,15 +169,26 @@ function resetGuessMap() {
 
 // ─────────────────────────────────────────────────────────────
 // Street View — created fresh each round (panoramas are distinct)
+//
+// If the location has a `pano` ID (all new games), we load it
+// directly so every client sees the *exact* same panorama.
+// Legacy games without a pano ID fall back to a lat/lng search.
 // ─────────────────────────────────────────────────────────────
 function loadPanorama() {
   const location = LOCATIONS[currentRound - 1];
-  const sv = new google.maps.StreetViewService();
 
+  // ── Direct pano-ID path (preferred, deterministic) ──────────
+  if (location.pano) {
+    showPanorama(location.pano, location);
+    return;
+  }
+
+  // ── Fallback: search by lat/lng (legacy games only) ─────────
+  const sv = new google.maps.StreetViewService();
   sv.getPanorama(
     {
       location: { lat: location.lat, lng: location.lng },
-      radius: 50000,
+      radius: 5000,
       source: google.maps.StreetViewSource.OUTDOOR,
       preference: google.maps.StreetViewPreference.NEAREST,
     },
@@ -187,42 +198,51 @@ function loadPanorama() {
         LOCATIONS[currentRound - 1] = {
           lat: data.location.latLng.lat(),
           lng: data.location.latLng.lng(),
-        };
-
-        panorama = new google.maps.StreetViewPanorama(els.panoEl, {
           pano: data.location.pano,
-          pov: { heading: Math.random() * 360, pitch: 0 },
-          zoom: 1,
-          addressControl: false,
-          fullscreenControl: false,
-          showRoadLabels: false,
-          motionTracking: false,
-          motionTrackingControl: false,
-        });
-
-        panorama.addListener("pov_changed", () =>
-          syncCompass(panorama.getPov().heading)
-        );
-
-        // Re-trigger guess map resize after panorama settles (layout shifts).
-        // Use safeResizeMap so an already-placed marker pin doesn't appear to move.
-        panorama.addListener("status_changed", () => {
-          requestAnimationFrame(() => safeResizeMap());
-        });
-
-        syncCompass(panorama.getPov().heading);
+        };
+        showPanorama(data.location.pano, LOCATIONS[currentRound - 1]);
       } else {
-        // No coverage — show message and auto-submit after 2s
-        els.panoEl.innerHTML = `
-          <div style="display:flex;align-items:center;justify-content:center;
-                      height:100%;color:#64748b;font-size:1.1rem;flex-direction:column;gap:1rem;">
-            <span style="font-size:2rem;">🌐</span>
-            No Street View coverage here — skipping round…
-          </div>`;
-        setTimeout(() => { if (!hasGuessed) autoSubmit(); }, 2000);
+        showNoCoverage();
       }
     }
   );
+}
+
+/** Render a Street View panorama given a deterministic pano ID. */
+function showPanorama(panoId, location) {
+  panorama = new google.maps.StreetViewPanorama(els.panoEl, {
+    pano: panoId,
+    pov: { heading: Math.random() * 360, pitch: 0 },
+    zoom: 1,
+    addressControl: false,
+    fullscreenControl: false,
+    showRoadLabels: false,
+    motionTracking: false,
+    motionTrackingControl: false,
+  });
+
+  panorama.addListener("pov_changed", () =>
+    syncCompass(panorama.getPov().heading)
+  );
+
+  // Re-trigger guess map resize after panorama settles (layout shifts).
+  // Use safeResizeMap so an already-placed marker pin doesn't appear to move.
+  panorama.addListener("status_changed", () => {
+    requestAnimationFrame(() => safeResizeMap());
+  });
+
+  syncCompass(panorama.getPov().heading);
+}
+
+/** Show a "no coverage" message and auto-submit after 2 s. */
+function showNoCoverage() {
+  els.panoEl.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:center;
+                height:100%;color:#64748b;font-size:1.1rem;flex-direction:column;gap:1rem;">
+      <span style="font-size:2rem;">🌐</span>
+      No Street View coverage here — skipping round…
+    </div>`;
+  setTimeout(() => { if (!hasGuessed) autoSubmit(); }, 2000);
 }
 
 // ─────────────────────────────────────────────────────────────
