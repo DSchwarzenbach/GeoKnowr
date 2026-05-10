@@ -104,7 +104,14 @@ function syncCompass(heading) {
 // Guess map — created ONCE at boot, reused every round
 // ─────────────────────────────────────────────────────────────
 function initGuessMap() {
-  guessMap = new google.maps.Map(els.guessMapEl, {
+  const mapEl = els.guessMapEl;
+
+  // Set explicit pixel dimensions before Google Maps reads the element —
+  // prevents it from computing a 0x0 viewport on slow/deferred layouts.
+  mapEl.style.width  = "320px";
+  mapEl.style.height = "200px";
+
+  guessMap = new google.maps.Map(mapEl, {
     center: { lat: 20, lng: 0 },
     zoom: 1,
     disableDefaultUI: true,
@@ -117,10 +124,11 @@ function initGuessMap() {
     placeGuessMarker(e.latLng);
   });
 
-  // Give the browser a frame to fully lay out the container
-  requestAnimationFrame(() => {
-    google.maps.event.trigger(guessMap, "resize");
-  });
+  // Staggered resize triggers: covers any layout shift timing edge-cases
+  const triggerResize = () => google.maps.event.trigger(guessMap, "resize");
+  requestAnimationFrame(triggerResize);
+  setTimeout(triggerResize, 400);
+  setTimeout(triggerResize, 1000);
 }
 
 function resetGuessMap() {

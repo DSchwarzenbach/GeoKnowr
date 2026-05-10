@@ -37,7 +37,7 @@
   <div id="game-area">
     <div id="panorama"></div>
 
-    <!-- Compass (top-left, above panorama) -->
+    <!-- Compass (top-left, overlaid on panorama) -->
     <div class="compass" id="compass" title="Heading">
       <div class="compass-ring">
         <span class="compass-cardinal n">N</span>
@@ -49,18 +49,21 @@
       </div>
       <span class="compass-heading" id="compass-heading">0°</span>
     </div>
+  </div>
 
-    <!-- Guess map overlay (bottom-right) -->
-    <div class="guess-map-container" id="guess-map-container">
-      <div class="guess-map-header">
-        <span class="guess-map-hint">Click map to place pin</span>
-        <button id="btn-expand-map" class="btn-icon" title="Expand map">⛶</button>
-      </div>
+  <!-- Guess map — fixed overlay, outside #game-area so Street View
+       iframe layout never affects its tile rendering -->
+  <div class="guess-map-container" id="guess-map-container">
+    <div class="guess-map-header">
+      <span class="guess-map-hint">Click map to place pin</span>
+      <button id="btn-expand-map" class="btn-icon" title="Expand map">⛶</button>
+    </div>
+    <div class="guess-map-clip">
       <div id="guess-map"></div>
-      <div class="guess-map-footer">
-        <p id="waiting-msg" class="waiting-msg hidden">⏳ 0 / 0 players guessed</p>
-        <button id="btn-guess" class="btn btn-guess" disabled>Guess!</button>
-      </div>
+    </div>
+    <div class="guess-map-footer">
+      <p id="waiting-msg" class="waiting-msg hidden">⏳ 0 / 0 players guessed</p>
+      <button id="btn-guess" class="btn btn-guess" disabled>Guess!</button>
     </div>
   </div>
 

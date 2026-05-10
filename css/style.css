@@ -483,12 +483,12 @@ option { background: var(--bg-2); }
 
 /* ── Guess Map ───────────────────────────────────────────────── */
 .guess-map-container {
-  position: absolute;
+  position: fixed;          /* independent of panorama/game-area layout */
   bottom: 1.5rem;
   right: 1.5rem;
+  z-index: 200;             /* above Street View iframe */
   width: 320px;
   border-radius: var(--radius);
-  overflow: hidden;
   box-shadow: var(--shadow-lg);
   border: 1px solid rgba(255,255,255,0.1);
   background: var(--bg-2);
@@ -510,6 +510,7 @@ option { background: var(--bg-2); }
   padding: 0.4rem 0.7rem;
   background: rgba(0,0,0,0.3);
   border-bottom: 1px solid var(--border);
+  border-radius: var(--radius) var(--radius) 0 0;
 }
 
 .guess-map-hint {
@@ -518,7 +519,18 @@ option { background: var(--bg-2); }
   font-weight: 500;
 }
 
-#guess-map { height: 200px; width: 100%; }
+/* Separate clip wrapper — overflow:hidden here, NOT on the container.
+   This prevents Google Maps' tile viewport calculation from being blocked. */
+.guess-map-clip {
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+
+#guess-map {
+  width: 320px;   /* explicit px, not % — prevents Maps computing 0 */
+  height: 200px;
+  display: block;
+}
 
 .guess-map-footer {
   display: flex;
