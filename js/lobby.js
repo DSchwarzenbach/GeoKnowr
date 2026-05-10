@@ -212,7 +212,10 @@ els.btnBackJoin.addEventListener("click", () => showScreen("home"));
 // ─────────────────────────────────────────────────────────────
 els.btnStartSolo.addEventListener("click", async () => {
   const name = els.soloNameInput.value.trim();
-  if (!name) return;
+  if (!name) {
+    els.soloError.textContent = "Please enter your name.";
+    return;
+  }
 
   const roundCount = parseInt(els.soloRounds.value, 10);
   const roundTime  = parseInt(els.soloRoundTime.value, 10);
@@ -265,7 +268,10 @@ els.btnStartSolo.addEventListener("click", async () => {
 
 els.btnCreate.addEventListener("click", async () => {
   const hostName = els.hostNameInput.value.trim();
-  if (!hostName) return;
+  if (!hostName) {
+    if (els.createError) els.createError.textContent = "Please enter your name.";
+    return;
+  }
 
   const settings = {
     round_count:        CONFIG.DEFAULTS.ROUND_COUNT,
@@ -312,7 +318,10 @@ els.btnJoinGame.addEventListener("click", async () => {
   const code = els.joinCodeInput.value.trim().toUpperCase();
   els.joinError.textContent = "";
 
-  if (!name || !code) return;
+  if (!name || !code) {
+    els.joinError.textContent = "Please enter both name and code.";
+    return;
+  }
 
   els.btnJoinGame.disabled = true;
   els.btnJoinGame.textContent = "Joining…";
