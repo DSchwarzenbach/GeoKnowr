@@ -7,8 +7,12 @@
 import CONFIG from "./config.js";
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-export const supabase = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
-
+export let supabase = null;
+try {
+  supabase = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+} catch (e) {
+  console.warn("Supabase not configured locally — Solo Mode only.");
+}
 // ─────────────────────────────────────────────────────────────
 // GAMES
 // ─────────────────────────────────────────────────────────────
