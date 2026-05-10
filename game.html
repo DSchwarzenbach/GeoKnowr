@@ -17,7 +17,10 @@
   <header class="game-hud">
     <div class="hud-left">
       <img src="assets/logo.png" alt="GeoKnowr" class="hud-logo" />
-      <span id="round-label" class="hud-round">Round 1 / 5</span>
+      <div class="hud-round-wrap">
+        <span id="round-label" class="hud-round">Round 1 / 5</span>
+        <div id="round-dots" class="round-dots"></div>
+      </div>
     </div>
     <div class="hud-center">
       <span id="timer-display" class="hud-timer">60</span>
@@ -34,6 +37,19 @@
   <div id="game-area">
     <div id="panorama"></div>
 
+    <!-- Compass (top-left, above panorama) -->
+    <div class="compass" id="compass" title="Heading">
+      <div class="compass-ring">
+        <span class="compass-cardinal n">N</span>
+        <span class="compass-cardinal e">E</span>
+        <span class="compass-cardinal s">S</span>
+        <span class="compass-cardinal w">W</span>
+        <div class="compass-needle" id="compass-needle"></div>
+        <div class="compass-center"></div>
+      </div>
+      <span class="compass-heading" id="compass-heading">0°</span>
+    </div>
+
     <!-- Guess map overlay (bottom-right) -->
     <div class="guess-map-container" id="guess-map-container">
       <div class="guess-map-header">
@@ -42,7 +58,7 @@
       </div>
       <div id="guess-map"></div>
       <div class="guess-map-footer">
-        <p id="waiting-msg" class="waiting-msg hidden">⏳ Waiting for other players…</p>
+        <p id="waiting-msg" class="waiting-msg hidden">⏳ 0 / 0 players guessed</p>
         <button id="btn-guess" class="btn btn-guess" disabled>Guess!</button>
       </div>
     </div>

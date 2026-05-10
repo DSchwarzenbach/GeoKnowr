@@ -45,6 +45,7 @@ let myTotalScore    = playerState.total_score || 0;
 // ─────────────────────────────────────────────────────────────
 const els = {
   roundLabel:    document.getElementById("round-label"),
+  roundDots:     document.getElementById("round-dots"),
   timerDisplay:  document.getElementById("timer-display"),
   totalScore:    document.getElementById("total-score"),
   guessBtn:      document.getElementById("btn-guess"),
@@ -56,7 +57,36 @@ const els = {
   nextBtn:       document.getElementById("btn-next-round"),
   finalPanel:    document.getElementById("final-panel"),
   finalBody:     document.getElementById("final-body"),
+  compassNeedle: document.getElementById("compass-needle"),
+  compassHeading: document.getElementById("compass-heading"),
 };
+
+// ─────────────────────────────────────────────────────────────
+// Round progress dots
+// ─────────────────────────────────────────────────────────────
+function initRoundDots() {
+  els.roundDots.innerHTML = Array.from({ length: TOTAL_ROUNDS }, (_, i) =>
+    `<div class="round-dot ${i + 1 < currentRound ? "done" : i + 1 === currentRound ? "current" : ""}"></div>`
+  ).join("");
+}
+
+function updateRoundDots() {
+  const dots = els.roundDots.querySelectorAll(".round-dot");
+  dots.forEach((dot, i) => {
+    dot.className = "round-dot";
+    if (i + 1 < currentRound)  dot.classList.add("done");
+    if (i + 1 === currentRound) dot.classList.add("current");
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+// Compass
+// ─────────────────────────────────────────────────────────────
+function syncCompass(heading) {
+  const h = ((heading % 360) + 360) % 360;
+  els.compassNeedle.style.setProperty("--heading", `${h}deg`);
+  els.compassHeading.textContent = `${Math.round(h)}\u00b0`;
+}
 
 // ─────────────────────────────────────────────────────────────
 // Initialise Google Maps components
@@ -102,6 +132,11 @@ function initMaps() {
           motionTracking: false,
           motionTrackingControl: false,
         });
+        // Sync compass whenever the player pans
+        panorama.addListener("pov_changed", () => {
+          syncCompass(panorama.getPov().heading);
+        });
+        syncCompass(panorama.getPov().heading);
       } else {
         // No coverage within 50km — show a message and skip this location
         els.panoEl.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#8b949e;font-size:1.2rem;">No Street View here — auto-submitting...</div>`;
@@ -193,8 +228,12 @@ subscribeToGuesses(gameState.id, async () => {
     getPlayers(gameState.id),
   ]);
 
+  // Update live guess counter
+  if (hasGuessed) {
+    els.waitingMsg.textContent = `\u23f3 ${guesses.length} / ${players.length} players guessed`;
+  }
+
   if (guesses.length >= players.length) {
-    // All players have guessed — show results
     showRoundResults(guesses, players);
   }
 });
@@ -309,6 +348,7 @@ function resetRound() {
   els.timerDisplay.classList.remove("timer-urgent");
   els.roundLabel.textContent = `Round ${currentRound} / ${TOTAL_ROUNDS}`;
 
+  updateRoundDots();
   initMaps();
   startTimer();
 }
@@ -333,6 +373,7 @@ function loadMapsApi() {
 loadMapsApi().then(() => {
   els.roundLabel.textContent = `Round ${currentRound} / ${TOTAL_ROUNDS}`;
   els.totalScore.textContent = "0";
+  initRoundDots();
   initMaps();
   startTimer();
 });
