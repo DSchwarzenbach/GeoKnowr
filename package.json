@@ -1,0 +1,24 @@
+{
+  "name": "geoguessrfree",
+  "version": "1.0.0",
+  "description": "��#\u0000 \u0000G\u0000e\u0000o\u0000K\u0000n\u0000o\u0000w\u0000r\u0000\r\u0000 \u0000",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DSchwarzenbach/GeoKnowr.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/DSchwarzenbach/GeoKnowr/issues"
+  },
+  "homepage": "https://github.com/DSchwarzenbach/GeoKnowr#readme",
+  "dependencies": {
+    "playwright": "^1.59.1"
+  }
+}

@@ -121,18 +121,29 @@ function initGuessMap() {
     placeGuessMarker(e.latLng);
   });
 
-  // Expand map logic
+  // Expand map logic — resize but preserve current center so pin doesn't jump
   els.btnExpandMap.addEventListener("click", () => {
     els.guessMapContainer.classList.toggle("expanded");
-    // Trigger a resize slightly after the CSS transition finishes
-    setTimeout(() => google.maps.event.trigger(guessMap, "resize"), 300);
+    setTimeout(() => safeResizeMap(), 300);
   });
 
-  // Staggered resize triggers: covers any layout shift timing edge-cases
-  const triggerResize = () => google.maps.event.trigger(guessMap, "resize");
-  requestAnimationFrame(triggerResize);
-  setTimeout(triggerResize, 400);
-  setTimeout(triggerResize, 1000);
+  // Staggered resize triggers: covers layout-shift timing edge-cases
+  requestAnimationFrame(() => safeResizeMap());
+  setTimeout(() => safeResizeMap(), 400);
+  setTimeout(() => safeResizeMap(), 1000);
+}
+
+/**
+ * safeResizeMap — trigger a map resize while preserving whatever center/zoom
+ * the user last set. This prevents resize events from jumping the map to a
+ * different position (e.g. after panorama load or expand/collapse transitions).
+ */
+function safeResizeMap() {
+  const center = guessMap.getCenter();
+  const zoom   = guessMap.getZoom();
+  google.maps.event.trigger(guessMap, "resize");
+  if (center) guessMap.setCenter(center);
+  if (zoom !== undefined) guessMap.setZoom(zoom);
 }
 
 function resetGuessMap() {
@@ -141,9 +152,12 @@ function resetGuessMap() {
     guessMarker.setMap(null);
     guessMarker = null;
   }
+  // Reset to world view, then resize so tiles render at the correct position
   guessMap.setCenter({ lat: 20, lng: 0 });
   guessMap.setZoom(1);
   google.maps.event.trigger(guessMap, "resize");
+  // Re-apply after resize so the map doesn't drift to a stale tile origin
+  guessMap.setCenter({ lat: 20, lng: 0 });
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -183,11 +197,10 @@ function loadPanorama() {
           syncCompass(panorama.getPov().heading)
         );
 
-        // Re-trigger guess map resize after panorama settles (layout shifts)
+        // Re-trigger guess map resize after panorama settles (layout shifts).
+        // Use safeResizeMap so an already-placed marker pin doesn't appear to move.
         panorama.addListener("status_changed", () => {
-          requestAnimationFrame(() =>
-            google.maps.event.trigger(guessMap, "resize")
-          );
+          requestAnimationFrame(() => safeResizeMap());
         });
 
         syncCompass(panorama.getPov().heading);
@@ -212,6 +225,8 @@ function placeGuessMarker(latLng) {
   if (guessMarker) guessMarker.setMap(null);
   guessMarker = new google.maps.Marker({ position: latLng, map: guessMap });
   els.guessBtn.disabled = false;
+  // Pan smoothly to the placed marker so the user can see their pin
+  guessMap.panTo(latLng);
 }
 
 // ─────────────────────────────────────────────────────────────
