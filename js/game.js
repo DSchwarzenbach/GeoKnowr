@@ -78,6 +78,9 @@ function initMaps() {
     placeGuessMarker(e.latLng);
   });
 
+  // Force tile repaint — fixes blank map when container dimensions settle late
+  google.maps.event.trigger(guessMap, "resize");
+
   // Find nearest Street View coverage before loading panorama
   const sv = new google.maps.StreetViewService();
   sv.getPanorama(
@@ -311,12 +314,25 @@ function resetRound() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Boot
+// Boot — dynamically load the Maps API so the key comes from
+// config.js (single source of truth) and there is no race
+// condition between the async script tag and this ES module.
 // ─────────────────────────────────────────────────────────────
-window.initGame = function () {
-  // Called by the Google Maps script callback
+function loadMapsApi() {
+  return new Promise((resolve) => {
+    if (window.google && window.google.maps) { resolve(); return; }
+    window.__mapsReady = resolve;
+    const script = document.createElement("script");
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${CONFIG.GOOGLE_MAPS_API_KEY}&callback=__mapsReady`;
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+  });
+}
+
+loadMapsApi().then(() => {
   els.roundLabel.textContent = `Round ${currentRound} / ${TOTAL_ROUNDS}`;
   els.totalScore.textContent = "0";
   initMaps();
   startTimer();
-};
+});
