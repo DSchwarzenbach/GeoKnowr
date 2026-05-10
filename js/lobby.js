@@ -71,6 +71,64 @@ function pickLocations(count) {
   return shuffled.slice(0, count);
 }
 
+/**
+ * Load the Google Maps JS API (needed for StreetViewService in the lobby).
+ * Resolves immediately if already loaded.
+ */
+function loadMapsApi() {
+  return new Promise((resolve) => {
+    if (window.google && window.google.maps) { resolve(); return; }
+    window.__lobbyMapsReady = resolve;
+    const script = document.createElement("script");
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${CONFIG.GOOGLE_MAPS_API_KEY}&callback=__lobbyMapsReady`;
+    script.async = true;
+    document.head.appendChild(script);
+  });
+}
+
+/**
+ * Pick `count` locations that are confirmed to have Street View coverage
+ * within 5km. Keeps drawing from the shuffled pool until enough valid
+ * ones are found. Progress callback receives (found, needed).
+ */
+async function pickValidLocations(count, onProgress) {
+  await loadMapsApi();
+  const sv = new google.maps.StreetViewService();
+  const shuffled = [...LOCATIONS].sort(() => Math.random() - 0.5);
+  const valid = [];
+
+  for (const loc of shuffled) {
+    if (valid.length >= count) break;
+
+    try {
+      const snapped = await new Promise((resolve, reject) => {
+        sv.getPanorama(
+          { location: loc, radius: 5000, preference: google.maps.StreetViewPreference.NEAREST },
+          (data, status) => {
+            if (status === google.maps.StreetViewStatus.OK) {
+              resolve({
+                lat: data.location.latLng.lat(),
+                lng: data.location.latLng.lng(),
+              });
+            } else {
+              reject();
+            }
+          }
+        );
+      });
+      valid.push(snapped);
+      onProgress(valid.length, count);
+    } catch {
+      // No coverage at this coord — skip and try next
+    }
+  }
+
+  if (valid.length < count) {
+    throw new Error(`Could only find ${valid.length}/${count} locations with Street View coverage. Try again.`);
+  }
+  return valid;
+}
+
 function renderPlayerList(players) {
   els.playerList.innerHTML = players
     .map(
@@ -138,25 +196,34 @@ els.btnCreate.addEventListener("click", async () => {
   if (!hostName) return;
 
   const settings = {
-    round_count:          CONFIG.DEFAULTS.ROUND_COUNT,  // fixed: always 5 rounds
-    round_time_seconds:   parseInt(els.roundTimeInput.value, 10),
-    max_players:          parseInt(els.maxPlayersInput.value, 10),
+    round_count:        CONFIG.DEFAULTS.ROUND_COUNT,
+    round_time_seconds: parseInt(els.roundTimeInput.value, 10),
+    max_players:        parseInt(els.maxPlayersInput.value, 10),
   };
 
-  const selectedLocations = pickLocations(settings.round_count);
-  const roomCode = generateRoomCode();
-
   els.btnCreate.disabled = true;
-  els.btnCreate.textContent = "Creating…";
   if (els.createError) els.createError.textContent = "";
 
+  const roomCode = generateRoomCode();
+
   try {
-    gameState   = await createGame({ roomCode, hostName, locations: selectedLocations, settings });
+    // Validate each location against Street View before creating the game.
+    // Button shows live progress: "Finding locations (2/5)…"
+    els.btnCreate.textContent = "Finding locations (0/5)\u2026";
+    const verifiedLocations = await pickValidLocations(
+      settings.round_count,
+      (found, total) => {
+        els.btnCreate.textContent = `Finding locations (${found}/${total})\u2026`;
+      }
+    );
+
+    els.btnCreate.textContent = "Creating\u2026";
+    gameState   = await createGame({ roomCode, hostName, locations: verifiedLocations, settings });
     playerState = await joinGame(gameState.id, hostName);
     enterLobby();
   } catch (e) {
     console.error(e);
-    if (els.createError) els.createError.textContent = e.message || "Failed to create game. Check your Supabase config.";
+    if (els.createError) els.createError.textContent = e.message || "Failed to create game. Check your config.";
     els.btnCreate.disabled = false;
     els.btnCreate.textContent = "Create Game";
   }
