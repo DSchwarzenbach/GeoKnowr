@@ -73,6 +73,8 @@ const els = {
   compassNeedle:  document.getElementById("compass-needle"),
   compassHeading: document.getElementById("compass-heading"),
   gameArea:       document.getElementById("game-area"),
+  btnExpandMap:   document.getElementById("btn-expand-map"),
+  guessMapContainer: document.getElementById("guess-map-container"),
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -107,22 +109,23 @@ function syncCompass(heading) {
 function initGuessMap() {
   const mapEl = els.guessMapEl;
 
-  // Set explicit pixel dimensions before Google Maps reads the element —
-  // prevents it from computing a 0x0 viewport on slow/deferred layouts.
-  mapEl.style.width  = "320px";
-  mapEl.style.height = "200px";
-
   guessMap = new google.maps.Map(mapEl, {
     center: { lat: 20, lng: 0 },
     zoom: 1,
     disableDefaultUI: true,
     gestureHandling: "greedy",
-    styles: [{ elementType: "labels", stylers: [{ visibility: "off" }] }],
   });
 
   guessMap.addListener("click", (e) => {
     if (hasGuessed) return;
     placeGuessMarker(e.latLng);
+  });
+
+  // Expand map logic
+  els.btnExpandMap.addEventListener("click", () => {
+    els.guessMapContainer.classList.toggle("expanded");
+    // Trigger a resize slightly after the CSS transition finishes
+    setTimeout(() => google.maps.event.trigger(guessMap, "resize"), 300);
   });
 
   // Staggered resize triggers: covers any layout shift timing edge-cases
