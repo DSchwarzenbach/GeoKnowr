@@ -37,6 +37,7 @@ let guessMap        = null;
 let panorama        = null;
 let timerInterval   = null;
 let hasGuessed      = false;
+let resultsShown    = false;  // guard against duplicate realtime events
 let myRoundScore    = 0;
 let myTotalScore    = playerState.total_score || 0;
 
@@ -108,8 +109,8 @@ function initMaps() {
     placeGuessMarker(e.latLng);
   });
 
-  // Force tile repaint — fixes blank map when container dimensions settle late
-  google.maps.event.trigger(guessMap, "resize");
+  // Force tile repaint — delayed so browser has finished layout
+  setTimeout(() => google.maps.event.trigger(guessMap, "resize"), 250);
 
   // Find nearest Street View coverage before loading panorama
   const sv = new google.maps.StreetViewService();
@@ -135,6 +136,10 @@ function initMaps() {
         // Sync compass whenever the player pans
         panorama.addListener("pov_changed", () => {
           syncCompass(panorama.getPov().heading);
+        });
+        // Trigger map resize once panorama has loaded (layout may shift)
+        panorama.addListener("position_changed", () => {
+          setTimeout(() => google.maps.event.trigger(guessMap, "resize"), 100);
         });
         syncCompass(panorama.getPov().heading);
       } else {
@@ -228,12 +233,14 @@ subscribeToGuesses(gameState.id, async () => {
     getPlayers(gameState.id),
   ]);
 
-  // Update live guess counter
-  if (hasGuessed) {
+  // Update live guess counter while waiting
+  if (hasGuessed && !resultsShown) {
     els.waitingMsg.textContent = `\u23f3 ${guesses.length} / ${players.length} players guessed`;
   }
 
-  if (guesses.length >= players.length) {
+  // Guard: only show results once even if duplicate events fire
+  if (guesses.length >= players.length && !resultsShown) {
+    resultsShown = true;
     showRoundResults(guesses, players);
   }
 });
@@ -340,6 +347,7 @@ async function showFinalResults() {
 // ─────────────────────────────────────────────────────────────
 function resetRound() {
   hasGuessed   = false;
+  resultsShown = false;
   guessMarker  = null;
   myRoundScore = 0;
 
