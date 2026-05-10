@@ -22,8 +22,49 @@
       <p class="logo-sub">Drop a pin. Beat your friends.</p>
     </div>
     <div class="btn-group">
-      <button id="btn-host" class="btn btn-primary">Host a Game</button>
-      <button id="btn-join" class="btn btn-secondary">Join with Code</button>
+      <button id="btn-solo" class="btn btn-primary">Solo Play</button>
+      <button id="btn-host" class="btn btn-secondary">Host Multiplayer</button>
+      <button id="btn-join" class="btn btn-ghost">Join with Code</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       SOLO SETUP SCREEN
+  ═══════════════════════════════════════════ -->
+  <div id="screen-solo" class="screen center-screen hidden">
+    <div class="card">
+      <div class="card-header">
+        <img src="assets/logo.png" alt="" class="card-logo" />
+        <h2>Solo Game</h2>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="solo-name">Your Name</label>
+        <input id="solo-name" class="field-input" type="text" maxlength="20" placeholder="e.g. Alex" autocomplete="off" />
+      </div>
+
+      <div class="settings-grid">
+        <div class="field-group">
+          <label class="field-label" for="solo-round-time">Round Timer</label>
+          <div class="input-suffix-wrap">
+            <input id="solo-round-time" class="field-input" type="number" value="60" min="0" max="600" />
+            <span class="input-suffix">sec</span>
+          </div>
+          <small class="field-hint">0 = no timer</small>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="solo-rounds">Rounds</label>
+          <select id="solo-rounds" class="field-input field-select">
+            <option value="3">3 rounds</option>
+            <option value="5" selected>5 rounds</option>
+            <option value="10">10 rounds</option>
+          </select>
+        </div>
+      </div>
+
+      <p id="solo-error" class="error-text"></p>
+      <button id="btn-start-solo" class="btn btn-primary w-full">Start Game</button>
+      <button id="btn-back-solo" class="btn btn-ghost w-full">Back</button>
     </div>
   </div>
 

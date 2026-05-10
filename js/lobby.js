@@ -22,6 +22,7 @@ let gameChannel = null;
 // ─────────────────────────────────────────────────────────────
 const screens = {
   home:    document.getElementById("screen-home"),
+  solo:    document.getElementById("screen-solo"),
   host:    document.getElementById("screen-host"),
   join:    document.getElementById("screen-join"),
   lobby:   document.getElementById("screen-lobby"),
@@ -29,8 +30,16 @@ const screens = {
 
 const els = {
   // Home
+  btnSolo:         document.getElementById("btn-solo"),
   btnHost:         document.getElementById("btn-host"),
   btnJoin:         document.getElementById("btn-join"),
+  // Solo setup
+  soloNameInput:   document.getElementById("solo-name"),
+  soloRoundTime:   document.getElementById("solo-round-time"),
+  soloRounds:      document.getElementById("solo-rounds"),
+  btnStartSolo:    document.getElementById("btn-start-solo"),
+  soloError:       document.getElementById("solo-error"),
+  btnBackSolo:     document.getElementById("btn-back-solo"),
   // Host setup
   hostNameInput:   document.getElementById("host-name"),
   roundTimeInput:  document.getElementById("setting-round-time"),
@@ -191,10 +200,68 @@ function enterLobby() {
 // Host flow
 // ─────────────────────────────────────────────────────────────
 
+els.btnSolo.addEventListener("click", () => showScreen("solo"));
 els.btnHost.addEventListener("click", () => showScreen("host"));
 els.btnJoin.addEventListener("click", () => showScreen("join"));
+els.btnBackSolo.addEventListener("click", () => showScreen("home"));
 els.btnBackHost.addEventListener("click", () => showScreen("home"));
 els.btnBackJoin.addEventListener("click", () => showScreen("home"));
+
+// ─────────────────────────────────────────────────────────────
+// Solo flow — no Supabase, pure client-side
+// ─────────────────────────────────────────────────────────────
+els.btnStartSolo.addEventListener("click", async () => {
+  const name = els.soloNameInput.value.trim();
+  if (!name) return;
+
+  const roundCount = parseInt(els.soloRounds.value, 10);
+  const roundTime  = parseInt(els.soloRoundTime.value, 10);
+
+  els.btnStartSolo.disabled = true;
+  els.soloError.textContent = "";
+
+  try {
+    els.btnStartSolo.textContent = `Finding locations (0/${roundCount})…`;
+    const locations = await pickValidLocations(roundCount, (found, total) => {
+      els.btnStartSolo.textContent = `Finding locations (${found}/${total})…`;
+    });
+
+    const gameId   = "solo-" + Date.now();
+    const playerId = "solo-player-" + Date.now();
+
+    const soloState = {
+      isSolo: true,
+      game: {
+        id:            gameId,
+        room_code:     "SOLO",
+        host_name:     name,
+        status:        "playing",
+        locations,
+        settings: {
+          round_count:        roundCount,
+          round_time_seconds: roundTime,
+          max_players:        1,
+        },
+        current_round: 1,
+      },
+      player: {
+        id:          playerId,
+        game_id:     gameId,
+        name,
+        is_ready:    true,
+        total_score: 0,
+      },
+    };
+
+    sessionStorage.setItem("geoState", JSON.stringify(soloState));
+    window.location.href = "game.html";
+  } catch (e) {
+    console.error(e);
+    els.soloError.textContent = e.message || "Failed to find locations. Try again.";
+    els.btnStartSolo.disabled = false;
+    els.btnStartSolo.textContent = "Start Game";
+  }
+});
 
 els.btnCreate.addEventListener("click", async () => {
   const hostName = els.hostNameInput.value.trim();

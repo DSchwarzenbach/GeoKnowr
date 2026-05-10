@@ -22,7 +22,7 @@ import {
 // ─────────────────────────────────────────────────────────────
 // Session state
 // ─────────────────────────────────────────────────────────────
-const { game: gameState, player: playerState } = JSON.parse(
+const { game: gameState, player: playerState, isSolo } = JSON.parse(
   sessionStorage.getItem("geoState") || "{}"
 );
 
@@ -44,7 +44,8 @@ let myRoundScore   = 0;
 let myTotalScore   = playerState.total_score || 0;
 let guessMarker    = null;
 let timerInterval  = null;
-let pollInterval   = null;   // fallback polling after guess submitted
+let pollInterval   = null;
+let soloGuesses    = [];   // stores guess data locally in solo mode
 
 // ─────────────────────────────────────────────────────────────
 // Maps state — created ONCE, never recreated
@@ -253,7 +254,7 @@ async function submitMyGuess() {
   stopTimer();
   els.guessBtn.disabled = true;
   els.waitingMsg.classList.remove("hidden");
-  els.waitingMsg.textContent = "\u23f3 Submitting\u2026";
+  els.waitingMsg.textContent = isSolo ? "\u23f3 Calculating score\u2026" : "\u23f3 Submitting\u2026";
 
   const actual   = LOCATIONS[currentRound - 1];
   const guessPos = guessMarker.getPosition();
@@ -263,6 +264,22 @@ async function submitMyGuess() {
   );
   myRoundScore = calculateScore(distanceKm);
 
+  if (isSolo) {
+    // Solo: store result in memory, show results immediately
+    soloGuesses = [{
+      player_id:   playerState.id,
+      players:     { name: playerState.name },
+      guessed_lat: guessPos.lat(),
+      guessed_lng: guessPos.lng(),
+      distance_km: distanceKm,
+      round_score: myRoundScore,
+    }];
+    resultsShown = true;
+    setTimeout(() => showRoundResults(soloGuesses, [playerState]), 300);
+    return;
+  }
+
+  // Multiplayer: submit to Supabase
   try {
     await submitGuess({
       gameId:      gameState.id,
@@ -277,14 +294,12 @@ async function submitMyGuess() {
   } catch (e) {
     console.error("Guess submit failed:", e);
     els.waitingMsg.textContent = "Failed to submit \u2014 retrying\u2026";
-    // Retry once after 1s
     setTimeout(async () => {
       try { await submitGuess({ gameId: gameState.id, playerId: playerState.id, roundNumber: currentRound, guessedLat: guessPos.lat(), guessedLng: guessPos.lng(), distanceKm, roundScore: myRoundScore }); }
       catch {}
     }, 1000);
   }
 
-  // Start fallback poll — in case realtime event is missed
   startResultsPoll();
 }
 
@@ -320,11 +335,10 @@ function stopResultsPoll() {
   if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Realtime subscription (fires checkAndShowResults immediately
-// when a guess is inserted — polling is the fallback)
-// ─────────────────────────────────────────────────────────────
-subscribeToGuesses(gameState.id, checkAndShowResults);
+// Realtime + polling (multiplayer only — solo shows results immediately)
+if (!isSolo) {
+  subscribeToGuesses(gameState.id, checkAndShowResults);
+}
 
 // ─────────────────────────────────────────────────────────────
 // Round results panel
@@ -412,10 +426,16 @@ els.nextBtn.addEventListener("click", async () => {
 // Final results
 // ─────────────────────────────────────────────────────────────
 async function showFinalResults() {
-  try { await advanceRound(gameState.id, currentRound, TOTAL_ROUNDS); } catch {}
+  if (!isSolo) {
+    try { await advanceRound(gameState.id, currentRound, TOTAL_ROUNDS); } catch {}
+  }
 
-  const players = await getPlayers(gameState.id);
-  const sorted  = [...players].sort((a, b) => b.total_score - a.total_score);
+  // Build player list: in solo mode, use local state
+  const players = isSolo
+    ? [{ ...playerState, total_score: myTotalScore }]
+    : await getPlayers(gameState.id);
+
+  const sorted = [...players].sort((a, b) => b.total_score - a.total_score);
 
   els.finalPanel.classList.remove("hidden");
   els.gameArea.classList.add("hidden");
@@ -436,6 +456,7 @@ function resetRound() {
   hasGuessed   = false;
   resultsShown = false;
   myRoundScore = 0;
+  soloGuesses  = [];
 
   stopTimer();
   stopResultsPoll();
