@@ -127,6 +127,13 @@ function initGuessMap() {
     setTimeout(() => safeResizeMap(), 300);
   });
 
+  // After ANY CSS transition on the container or clip (hover expand/collapse),
+  // re-sync Google Maps to the new pixel dimensions so click→latlng mapping
+  // stays accurate.
+  const clipEl = els.guessMapContainer.querySelector(".guess-map-clip");
+  els.guessMapContainer.addEventListener("transitionend", () => safeResizeMap());
+  if (clipEl) clipEl.addEventListener("transitionend", () => safeResizeMap());
+
   // Staggered resize triggers: covers layout-shift timing edge-cases
   requestAnimationFrame(() => safeResizeMap());
   setTimeout(() => safeResizeMap(), 400);
@@ -262,7 +269,11 @@ function stopTimer() {
 els.guessBtn.addEventListener("click", submitMyGuess);
 
 async function autoSubmit() {
-  placeGuessMarker(guessMap.getCenter());
+  // Only fall back to map center if the user never placed a pin.
+  // If they already have a marker, submit exactly where they placed it.
+  if (!guessMarker) {
+    placeGuessMarker(guessMap.getCenter());
+  }
   await submitMyGuess();
 }
 
