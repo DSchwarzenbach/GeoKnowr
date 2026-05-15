@@ -37,29 +37,67 @@ OUTPUT_PATH    = os.path.join(os.path.dirname(__file__), "data", "locations.json
 METADATA_URL = "https://maps.googleapis.com/maps/api/streetview/metadata"
 
 # ─────────────────────────────────────────────────────────────
-# Same weighted region pool as generate_locations.py
+# Balanced weighted region pool (synced with generate_locations.py)
+#
+# Sub-regions target corridors with known Street View coverage
+# rather than entire continents (avoids wasting candidates on
+# the Sahara, Outback, Amazon, etc.).  Weights are bumped for
+# Africa / S. America / Oceania to compensate for lower hit rates.
 # ─────────────────────────────────────────────────────────────
 REGIONS = [
     # (lat_min, lat_max, lng_min, lng_max, weight)
-    # North America
-    (25.0,  49.0, -124.0,  -67.0, 120),  # Contiguous USA
-    (44.0,  60.0,  -95.0,  -60.0,  40),  # Eastern Canada
-    (19.0,  30.0,  -99.0,  -87.0,  25),  # Mexico
-    # Europe
-    (35.0,  60.0,  -10.0,   30.0, 180),  # Western/Central Europe
-    (50.0,  70.0,   20.0,   60.0,  40),  # Scandinavia + Western Russia
-    # South America
-    (-33.0,  5.0,  -70.0,  -35.0,  80),  # Brazil, Argentina, Colombia
-    # Africa
-    (-34.0, 37.0,  -17.0,   51.0,  60),  # Africa
-    # Asia
-    (20.0,  45.0,  100.0,  145.0,  80),  # East Asia
-    ( 1.0,  22.0,   98.0,  140.0,  40),  # SE Asia
-    ( 8.0,  37.0,   68.0,   97.0,  40),  # South Asia
-    (29.0,  42.0,   26.0,   60.0,  30),  # Middle East / Turkey
-    # Oceania
-    (-43.0, -10.0, 113.0,  153.0,  60),  # Australia
-    (-46.0, -34.0, 166.0,  178.0,  15),  # New Zealand
+    # ── North America ─────────────────────────────── (~18%)
+    (25.0,  49.0, -124.0,  -67.0,  80),   # Contiguous USA
+    (44.0,  55.0,  -95.0,  -60.0,  20),   # Eastern Canada
+    (19.0,  30.0, -105.0,  -87.0,  20),   # Mexico
+
+    # ── Europe ────────────────────────────────────── (~22%)
+    (36.0,  55.0,  -10.0,   25.0, 100),   # Western / Central Europe
+    (55.0,  65.0,    5.0,   30.0,  20),   # Scandinavia
+    (38.0,  48.0,   15.0,   30.0,  20),   # Eastern Europe / Balkans
+
+    # ── South America ─────────────────────────────── (~14%)
+    (-30.0, -5.0,  -55.0,  -35.0,  50),   # Brazil (coastal/south)
+    (-38.0,-28.0,  -70.0,  -58.0,  25),   # Argentina (central)
+    (-4.0,  12.0,  -77.0,  -67.0,  20),   # Colombia / Ecuador
+    (-33.0,-18.0,  -72.0,  -68.0,  15),   # Chile / Peru coast
+    (-36.0,-32.0,  -58.0,  -53.0,  10),   # Uruguay
+
+    # ── Africa ────────────────────────────────────── (~12%)
+    (-35.0,-22.0,   17.0,   33.0,  35),   # South Africa / Botswana
+    (-5.0,   5.0,   28.0,   42.0,  20),   # Kenya / Uganda / Rwanda / Tanzania
+    ( 4.0,  14.0,    2.0,   15.0,  20),   # Nigeria / Ghana / Benin
+    (12.0,  17.0,  -17.0,   -8.0,  15),   # Senegal / Gambia / Mali south
+    (30.0,  37.0,    8.0,   11.0,  10),   # Tunisia
+    (-20.0, -8.0,   22.0,   34.0,  10),   # Zambia / Malawi / Mozambique north
+
+    # ── East Asia ─────────────────────────────────── (~10%)
+    (31.0,  44.0,  129.0,  145.0,  35),   # Japan
+    (34.0,  38.0,  126.0,  130.0,  20),   # South Korea
+    (22.0,  40.0,  100.0,  122.0,  20),   # China coastal + Taiwan
+    (47.0,  51.0,  106.0,  115.0,   5),   # Mongolia (Ulaanbaatar corridor)
+
+    # ── Southeast Asia ────────────────────────────── (~7%)
+    (13.0,  20.0,   99.0,  106.0,  15),   # Thailand
+    ( 1.0,   7.0,  100.0,  120.0,  12),   # Malaysia / Singapore / Indonesia
+    (10.0,  19.0,  121.0,  127.0,  12),   # Philippines
+    (10.0,  22.0,  104.0,  109.0,  10),   # Vietnam / Cambodia
+
+    # ── South Asia ────────────────────────────────── (~6%)
+    ( 8.0,  32.0,   73.0,   90.0,  35),   # India (main)
+    (23.0,  28.0,   86.0,   93.0,  10),   # Bangladesh / Nepal corridor
+    (24.0,  37.0,   62.0,   73.0,   5),   # Pakistan (GT road corridor)
+
+    # ── Middle East / Turkey ──────────────────────── (~5%)
+    (36.0,  42.0,   26.0,   44.0,  20),   # Turkey
+    (29.0,  34.0,   34.0,   36.0,   8),   # Israel / Jordan
+    (24.0,  30.0,   46.0,   55.0,   8),   # UAE / Oman / Qatar
+
+    # ── Oceania ───────────────────────────────────── (~6%)
+    (-38.0,-27.0,  143.0,  154.0,  20),   # Australia (east coast)
+    (-35.0,-30.0,  114.0,  118.0,  10),   # Australia (Perth / WA coast)
+    (-28.0,-12.0,  130.0,  142.0,   5),   # Australia (NT / Queensland inland)
+    (-46.0,-34.0,  166.0,  178.0,  12),   # New Zealand
 ]
 
 TOTAL_WEIGHT = sum(r[4] for r in REGIONS)
